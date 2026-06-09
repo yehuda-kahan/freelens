@@ -26,9 +26,9 @@ Investigation during implementation will confirm which. A secondary hypothesis (
 
 ## Goals
 
-1. Adding a kubeconfig file or folder via the UI starts watching and surfaces clusters **immediately**, with no app restart, on Windows / macOS / Linux.
+1. **Primary:** adding a kubeconfig file or folder via the UI starts watching and surfaces clusters **immediately and automatically**, with no app restart and no extra user action, on Windows / macOS / Linux. This is the must-have outcome.
 2. Removing an entry stops the watcher immediately.
-3. Provide a manual **Refresh syncs** affordance as a user-visible fallback.
+3. **Secondary:** provide a manual **Refresh syncs** affordance as a user-visible fallback for edge cases (filesystem hiccups, sleep/wake on laptops, network mounts). This is a nice-to-have on top of goal 1, not a replacement for it.
 
 ## Non-goals
 
@@ -38,7 +38,9 @@ Investigation during implementation will confirm which. A secondary hypothesis (
 
 ## Approach
 
-### A. Fix the underlying propagation (primary)
+### A. Fix the underlying propagation (primary, must-have)
+
+This is the fix that delivers goal 1 — clicking "Sync file(s)" / "Sync folder(s)" causes the watcher to start automatically and clusters to appear without any further user action.
 
 Identify why runtime mutations to `kubeconfigSyncs` are not triggering the main-process observer, and fix it. Concrete options, ranked by likelihood based on initial code reading:
 
@@ -48,7 +50,9 @@ Identify why runtime mutations to `kubeconfigSyncs` are not triggering the main-
 
 The fix lives in `packages/core/src/main/catalog-sources/kubeconfig-sync/manager.ts`. No `process.platform` branching — the bug is cross-platform and so is the fix.
 
-### B. Manual refresh affordance
+### B. Manual refresh affordance (secondary, fallback)
+
+This is a nice-to-have safety net, **not** the intended way to use kubeconfig syncs day-to-day. Goal 1 is delivered by fix A; this exists for edge cases.
 
 Add a **Refresh syncs** button to the Kubeconfig Syncs preferences panel and bind a global keyboard shortcut (`Ctrl+Shift+R` / `Cmd+Shift+R`, chosen to avoid Chromium's `Ctrl+R` page reload which only reloads the renderer and cannot affect the main-process watcher).
 
